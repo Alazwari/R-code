@@ -1,0 +1,24 @@
+Various Classification models used are Logistic Regression, Random Forest, Support Vector Machine, Naive Bayes, and ANN using R.
+In this data, the dependent variable (Y) is binary (1 if the child has Type 1 Diabetes (T1D) and 0 if not).
+The independent variables (X's) are:
+•	City: where the child lives (3 levels) (3 cities)
+•	Gender: (2 levels) Female & Male
+•	Residency: (2 levels) Urban & Rural
+•	Consanguine parents (C.P.): (2 levels) (Yes, No)
+•	Income Status (I.S.): (5 levels): Income Status: High income: >12000 Saudi Riyals, Upper-middle income:(>9000-12000) Saudi Riyals, Middle income: (>6000-9000) Saudi Riyals, Lower-middle income: (>3000-6000), Low income: ≤ 3000 Saudi Riyals)
+•	First-degree of T1D diabetes (F.H.First.d.): (2 levels) (Yes, No)
+•	Is father has T1D (F.TlD ): (2 levels) (Yes, No)
+•	Is mother has T1D (M.TlD): (2 levels) (Yes, No)
+•	Is siblings has T1D(S.TlD): (2 levels) (Yes, No)
+•	Second-degree of T1D diabetes (F.H.2nd): (2 levels) (Yes, No)
+•	Nutritional history (Nutrition.H.) (3 levels) (Breastfeeding, Introduction to cow’s Milk, Both)
+•	Introducing to solid food (Solidfood): (2 levels) (<6 months, >6 months)
+•	Year of childbirth (Birth.Year): (2003-2010, 2011-2020)
+•	Birth delivery mode (Delivery): (2 levels) (Natural (SVD), Cesarean section (CS))
+•	Gestational age or (pregnancy length) (P.L.) gestational age in weeks which is categorical variable based on theses (5 levels): Post term: 41,42 weeks, Full term: 39,40 weeks, Moderate term: 37,38 weeks, Preterm: 36-33 weeks, Very Preterm: less than 33 weeks.
+•	Weigh at birth: the child weight at birth (Birth.Weight): (4 levels) (<2.5 Kg, (2.5 - 3.5) Kg, (3.5 - 4.0) kg, >4.0 Kg)
+•	Birthorder: the birth order of the child (B.Order): (4 levels: 1st, 2nd, 3rd and others)
+•	Mother age at childbirth (M.Age): (3 levels: Maternal Age at child’s birth: (<25 years,  maternal age (25-35) years, maternal age (>35 years))
+•	Is the mother having gestational diabetes through this child’s pregnancy (Gest.Dia.): (2 levels) (Yes, No)
+•	Preeclampsia: Is the mother has Pre-eclampsia through this child’s pregnancy (2 levels) (Yes, No)
+•	Asthma: is the Is the mother has asthma (2 levels) (Yes, No).
