@@ -1,0 +1,111 @@
+library(readxl)
+library(caret)
+mydata<-read_excel("Case-Control.xlsx", col_types = c("text","text","numeric","text", "text", "text","text","text","text","text", "text", "text", "text", "text", 
+                                                      "text","text", "numeric","numeric", "text", "numeric", "text", "text", "text", "text"))                                                        
+names(mydata)
+names(mydata) = c("ID","Birth_date","Birth_year", "City", "Gender", "Nutrition.H.", "Solidfood", "Residency", "C.P.","I.S.", "F.H.2nd","F.H.First.d","F.TlD", "M.TlD",
+                  "S.TlD", "Delivery", "Pregnancy.Length","Birth_Weight", "B.Order","Mother.Age", "Gest.Dia.", "Preeclampsia",  "Asthma", "Y")
+str(mydata)
+summary(mydata)
+####  
+# converting variables to factors
+mydata$Gender=factor(mydata$Gender,
+                     levels= c('Male', 'Female') ,
+                     labels= c(1,2))
+mydata$F.H.2nd =factor(mydata$F.H.2nd,
+                       levels= c ('No' , 'Second-degree relative') ,
+                       labels= c(1,2))
+mydata$F.H.First.d=factor(mydata$F.H.First.d,
+                          levels= c ('Siblings', 'Father','Mother','None'),
+                          labels= c(1,2,3,4))
+mydata$F.TlD=factor(mydata$F.TlD,
+                    levels= c ('No', 'Yes'),
+                    labels= c(1,2))
+mydata$S.TlD =factor(mydata$S.TlD,
+                     levels= c ('No', 'Yes'),
+                     labels= c(1,2))
+mydata$Residency =factor(mydata$Residency,
+                         levels= c('Rural', 'Urban'),
+                         labels= c(1,2))
+mydata$C.P.=factor(mydata$C.P.,
+                   levels= c('No','Yes'),
+                   labels= c(1,2))
+mydata$City =factor (mydata$City,
+                     levels= c('Al hasa', 'Jeddah', 'Riyadh') ,
+                     labels = c(1,2,3))
+mydata$Delivery =factor(mydata$Delivery,
+                        levels= c('Natural (SVD)', 'Cesarean section (CS)'),
+                        labels= c(1,2))
+mydata$I.S. =factor(mydata$I.S.,
+                    levels= c('Low income', 'Lower-middle income', 'Middle income', 'Upper - middle income', 'High income') ,
+                    labels= c(1,2,3,4,5))
+mydata$B.Order =factor(mydata$B.Order,
+                       levels= c('1', '2', '3', 'Others') ,
+                       labels= c(1,2,3,4))
+mydata$Gest.Dia. =factor(mydata$Gest.Dia.,
+                         levels= c('No','Yes'),
+                         labels= c(1,2))
+mydata$Asthma =factor(mydata$Asthma,
+                      levels= c('No', 'Yes') ,
+                      labels= c(1,2))
+mydata$Nutrition.H. =factor(mydata$Nutrition.H.,
+                            levels= c('Breastfeeding','Introduction to Cow’s milk','Both'),
+                            labels= c(1,2,3))
+mydata$Preeclampsia =factor(mydata$Preeclampsia,
+                            levels= c('No','Yes'),
+                            labels= c(1,2))
+mydata$M.TlD =factor(mydata$M.TlD,
+                     levels= c('No','Mother'),
+                     labels= c(1,2))
+mydata$Solidfood=factor(mydata$Solidfood,
+                        levels= c('More than 6 months','Less than 6 months'),
+                        labels= c(1,2))
+Birth.Weight<-cut(mydata$Birth_Weight,breaks =c(0,2.400,3.500,4.000,4.500),labels= c("1","2","3","4"),
+                  include.lowest = FALSE, right = TRUE)
+mydata<- cbind(mydata, Birth.Weight)
+M.Age<-cut(mydata$Mother.Age,breaks =c(0,24,35,44),labels= c("1","2","3"),
+           include.lowest = FALSE, right = TRUE)
+mydata<- cbind(mydata, M.Age)
+Birth.Year<-cut(mydata$Birth_year,breaks =c(0,2010,2020),labels= c("1","2"),
+                include.lowest = FALSE, right = TRUE)
+mydata<- cbind(mydata,Birth.Year)
+P.L.<-cut(mydata$Pregnancy.Length,breaks =c(0,32,36,38,40,42),labels= c("1","2","3","4","5"),
+          include.lowest = FALSE, right = TRUE)
+mydata<- cbind(mydata,P.L.)
+
+
+###
+str(mydata)  
+mydata<- mydata[,c(4:11,13:16,19,21:28)]
+str(mydata)
+
+#Chisq.test 
+chisq.test(mydata$Y, mydata$City)
+chisq.test(mydata$Y, mydata$Gender)
+chisq.test(mydata$Y, mydata$Residency)
+chisq.test(mydata$Y, mydata$I.S.)
+chisq.test(mydata$Y, mydata$C.P.)
+chisq.test(mydata$Y, mydata$F.H.First.d)
+chisq.test(mydata$Y, mydata$F.H.2nd)
+chisq.test(mydata$Y, mydata$Nutrition.H.)
+chisq.test(mydata$Y, mydata$Solidfood)
+chisq.test(mydata$Y, mydata$P.L.)
+chisq.test(mydata$Y, mydata$Delivery)
+chisq.test(mydata$Y, mydata$Birth.Weight)
+chisq.test(mydata$Y, mydata$B.Order)
+chisq.test(mydata$Y, mydata$M.Age)
+chisq.test(mydata$Y, mydata$Gest.Dia.)
+chisq.test(mydata$Y, mydata$Preeclampsia)
+chisq.test(mydata$Y, mydata$Asthma)
+
+##
+mydata$Y<- as.factor(mydata$Y)
+mydata$City= relevel(mydata$City, ref=3)
+mydata$I.S.= relevel(mydata$I.S., ref=5)
+mydata$P.L. = relevel(mydata$P.L., ref=5)
+mydata$B.Order= relevel(mydata$B.Order, ref=4)
+mydata$Nutrition.H. = relevel(mydata$Nutrition.H., ref=1)
+mydata$Bitrh.Weight= relevel(mydata$Bitrh.Weight, ref=2)
+###
+
+
