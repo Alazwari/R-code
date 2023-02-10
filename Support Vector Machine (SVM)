@@ -1,0 +1,216 @@
+
+# Support Vector Machine (SVM) "linear"
+library(e1071)
+# Splitting the data into the Training set and Test set
+set.seed(277)
+ind = sample(2, nrow(mydata), replace=TRUE, prob=c(0.7, 0.3))
+train = mydata[ind==1,]
+test = mydata[ind==2,]
+
+# Setup for cross validation
+ctrl<- trainControl(method="cv",number= 10)
+
+#SVM modelling
+linear.tune= tune.svm(Y~., data=train, kernel="linear", 
+                      cost=c(0.001, 0.01, 0.1, 1,5,10),
+                      trControl=ctrl, probability= TRUE)
+# Choosing the best model
+best.linear=linear.tune$best.model
+summary(best.linear)
+
+# Predicting the test set results
+tune.test= predict(best.linear, test, probability= TRUE)
+pred1= data.frame(attr(tune.test, 'probabilities'))
+# Confusion Matrix
+confusionMatrix(as.factor(as.numeric(pred1$X1>0.5)), test$Y ,mode = "everything", positive = '1')
+# Area under the Curve (AUC)
+pred<- ROCR::prediction(pred1$X1, test$Y)
+auc2<- performance(pred, "auc")
+auc2<- unlist(slot(auc2, "y.values"))
+auc2<- round (auc2, 4)
+auc2
+# ROC Plot  for SVM (Linear kernel)
+rocs<- performance(pred, "tpr", "fpr")
+plot(rocs,
+     colorize=T,  cex=4.3, col='black',
+     cex.main=1.3, cex.sub=4.3,
+     cex.lab=1.3, cex.axis=4.3,
+     font.main=4.3,
+     font.sub=4.3,
+     font.axis=4.3,
+     main="ROC Curve of SVM(Linear) ",
+     ylab=" Sensitivity",
+     xlab=" 1-Specificity")
+abline (a=0, b=1)
+legend(.8, .2, auc2, title="AUC", cex= 1.0)
+##
+# Support Vector Machine (SVM) "Polynomial"
+set.seed(277)
+ind= sample(2, nrow(mydata), replace=TRUE, prob=c(0.7,0.3))
+train = mydata [ind==1,]
+test = mydata [ind==2, ]
+# Setup for cross validation
+ctrl <-  trainControl(method="cv",   number= 10)
+# Training models 
+poly.tune = tune.svm(Y~., data=train, kernel="polynomial",
+                     degree=c(3,4,5), coefO=c(0.1,0.5,1,2,3,4), trControl=ctrl, probability= TRUE)
+summary(poly.tune)
+best.poly= poly.tune$best.model
+summary(best.poly)
+# Predicting the test set results
+poly.test= predict(best.poly, test, probability= TRUE)
+pred33 = data.frame(attr (poly.test, 'probabilities'))
+# confusion Matrix
+confusionMatrix(as.factor(as.numeric(pred33$X1>0.5)), test$Y, mode = "everything", positive = '1')
+# Area under Curve (AUC)
+pred3<- ROCR:: prediction (pred33$X1, test$Y)
+auc3<-performance(pred3, "auc")
+auc3<-unlist(slot(auc3, "y.values"))
+auc3<- round(auc3,4)
+auc3
+# ROC Plot  for SVM (Polynmoial kernel)
+rocsp<- performance(pred3, "tpr", "fpr")
+plot(rocsp,
+     colorize=T, cex=4.3, col='black',
+     cex.main=1.3, cex.sub=4.3,
+     cex.lab=1.3, cex.axis=4.3,
+     font.main=4.3,
+     font.sub=4.3,
+     font.axis=4.3,
+     main="ROC Curve Of SVM (Polynomial)",
+     ylab="Sensitivity",
+     xlab="1-Specificity")
+abline (a=0, b=1)
+legend(.8,.2, auc3, title="AUC", cex= 1.0)
+
+## Support Vector Machine (SVM) "radial"
+set.seed(277)
+ind= sample(2, nrow(mydata), replace=TRUE, prob=c(0.7,0.3))
+train = mydata[ind==1,]
+test = mydata [ind==2,]
+# Setup for cross validation
+ctrl <-  trainControl(method="cv",    number= 10)
+rbf.tune = tune.svm(Y~., data=train, kernel="radial", cost=c(0.1,0.5,1,2,3),
+                    gamma=c(0.1,0.5,1,2,3), trControl=ctrl, probability= TRUE)
+summary (rbf.tune)
+best.rbf = rbf.tune$best.model
+summary (best.rbf)
+#Predicting the results
+rbf.test = predict(best.rbf, test,probability = TRUE)
+pred4 = data.frame(attr(rbf.test, 'probabilities'))
+# confusionMatrix
+confusionMatrix(as.factor (as.numeric(pred4$X1>0.5)), test$Y, mode = "everything", positive = '1')
+# Area under the curve (AUC)
+pred5<- ROCR:: prediction (pred4$X1, test$Y)
+auc3<- performance (pred5, "auc")
+auc3<- unlist(slot(auc3, "y.values"))
+auc3<- round(auc3, 4)
+auc3
+# ROC Plot  for SVM (radial kernel)
+rocsrr<- performance(pred5, "tpr", "fpr")
+plot(rocsrr,
+      colorize=T, cex=4.3, col='black',
+      cex.main=1.3, cex.sub=4.3,
+      cex.lab=1.3, cex.axis=4.3,
+      font.main=4.3,
+      font.sub=4.3,
+      font.axis=4.3,
+      main="ROC Curve of SVM(Radial) ",
+      ylab=" Sensitivity",
+      xlab=" 1-Specificity")
+abline (a=0, b=1)
+legend(.8, .2, auc3, title="AUC", cex= 1.0)
+
+# Support Vector Machine (SVM) "Sigmoid"
+set.seed(277)
+ind = sample(2, nrow (mydata), replace=TRUE, prob=c (0.7, 0.3))
+train = mydata [ind==1,]
+test= mydata[ind==2,]
+# Setup for cross validation
+ctrl <- trainControl(method="cv",    number= 10)
+sigmoid.tune = tune.svm (Y~., data=train, kernel="sigmoid",
+                         gamma=c(0.1,0.5,1,2,3), coefO=c(0.1,0.5,1,2,3),trcontrol=ctrl, probability= TRUE)
+summary (sigmoid.tune)
+best.sigmoid = sigmoid.tune$best.model
+summary (best.sigmoid)
+sigmoid.test= predict (best.sigmoid, test,probability = TRUE)
+pred6= data.frame(attr (sigmoid.test, 'probabilities'))
+confusionMatrix (as.factor(as.numeric(pred6$X1>0.5)), test$Y, mode = "everything", positive = '1')
+# Area under Curve (AUC)
+pred7<- ROCR::prediction (pred6$X1, test$Y)
+auc4<- performance(pred7, "auc")
+auc4<- unlist(slot(auc4, "y.values"))
+auc4<- round(auc4, 4)
+auc4
+# ROC Plot  for SVM (sigmoid kernel)
+rocss<- performance (pred7, "tpr", "fpr")
+plot(rocss,
+     colorize=T, cex=4.3, col='black',
+     cex.main=1.3, cex.sub=4.3,
+     cex.lab=1.3, cex.axis=4.3,
+     font.main=4.3,
+     font.sub=4.3,
+     font.axis=4.3,
+     main="ROC Curve of SVM(Sigmoid) ",
+     ylab="Sensitivity",
+     xlab=" 1-Specificity")
+abline (a=0, b=1)
+legend(.8, .2, auc4, title="AUC", cex= 1.0)
+
+
+#Reduced model SVM "linear"
+# Variables Importance 
+library(caret)
+model.svm= train(Y~., data=train, method="svmLinear", 
+                 trControl=ctrl)
+Varimp<- varImp(model.svm)
+plot(Varimp,  
+     cex.main=1.3, cex.sub=4.3,
+     cex.lab=2.3, cex.axis=4.3,
+     font.main=4.3,
+     font.sub=4.3,
+     font.axis=4.3,
+     main="SVM (Variable importance)")
+#
+mydata2<- mydata[,c(5,7,8,11,12,13,14,17,19)]
+str(mydata2)
+# Splitting the data into the Training set and Test set
+set.seed(611)
+ind = sample(2, nrow(mydata2), replace=TRUE, prob=c(0.7, 0.3))
+train2 = mydata1[ind==1,]
+test2 = mydata1[ind==2,]
+# Setup for cross validation
+ctrl<-  trainControl(method="cv",    number= 10)
+#SVM modelling
+linear.tune1= tune.svm(Y~., data=train2, kernel="linear", 
+                       cost=c(0.001, 0.01, 0.1, 1,5,10),
+                       trControl=ctrl, probability= TRUE)
+
+best.linear1=linear.tune1$best.model
+summary(best.linear1)
+# Predicting the results
+tune.test1= predict(best.linear1, test2, probability= TRUE)
+pred22= data.frame(attr(tune.test1, 'probabilities'))
+#confusion Matrix
+confusionMatrix(as.factor(as.numeric(pred22$X1>0.5)), test2$Y ,mode = "everything", positive = '1')
+# Area under the curve (AUC)
+pred2<- ROCR::prediction (pred22$X1, test2$Y)
+auc22<- performance(pred2, "auc")
+auc22<- unlist(slot(auc22, "y.values"))
+auc22<- round (auc22, 4)
+auc22
+# Plot ROC for reduced SVM(Linear) 
+rocrs<- performance(pred22, "tpr", "fpr")
+plot(rocrs,
+     colorize=T,  cex=4.3, col='black',
+     cex.main=1.3, cex.sub=4.3,
+     cex.lab=1.3, cex.axis=4.3,
+     font.main=4.3,
+     font.sub=4.3,
+     font.axis=4.3,
+     main="ROC Curve of Reduced SVM(Linear) ",
+     ylab=" Sensitivity",
+     xlab=" 1-Specificity")
+abline (a=0, b=1)
+legend(.8, .2, auc22, title="AUC", cex= 1.0)
+###
