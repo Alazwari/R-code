@@ -1,0 +1,242 @@
+library(caret)
+library(AER)
+library(e1071)
+library(randomForest)
+library(DHARMa)
+library(boot)
+library(car)
+library(ggplot2)
+
+mydata<- read.csv('data per month.csv',header=T,na.strings=c(""))
+str(mydata)
+summary(mydata)
+
+#Model without interaction
+Model <- glm(Y ~ child.weight.more.3.5+ Mother.age.more.25+Family.history+ Nutrition.history(introduction.to.cow.milk) , data= mydata, family = poisson)
+summary(Model)
+testDispersion(Model)
+
+# Poisson regression model with interaction terms
+Modeln <- glm(Y ~ child.weight.more.3.5*Mother.age.more.25*Family.history*Nutrition.history(introduction.to.cow.milk) , data= mydata, family = poisson)
+summary(Modeln)
+
+#multicollinearity
+vif(Modeln)
+
+
+# Get confidence intervals
+conf_intervals <- confint(Modeln)  # Default is 95% CI
+
+# Print the confidence intervals
+print(conf_intervals)
+
+
+
+# For Model without interaction 
+# Bootstrapping function to calculate R-squared
+r_squared <- function(formula, mydata, indices) {
+  val <- mydata[indices,] # selecting sample with boot 
+  fit <- lm(formula, data=val)
+  return(summary(fit)$r.square)
+} 
+
+# Performing 1500 replications with boot 
+output<- boot(data=mydata, statistic=r_squared, 
+                R=1500, formula=Y ~ child.weight.more.3.5+ Mother.age.more.25+Family.history+ Nutrition.history(introduction.to.cow.milk))
+
+output
+
+####  For Model with interaction 
+r_squared <- function(formula, mydata, indices) {
+  val <- mydata[indices,] # selecting sample with boot 
+  fit <- lm(formula, data=val)
+  return(summary(fit)$r.square)
+} 
+# Performing 1500 replications with boot 
+outputn<- boot(data=mydata, statistic=r_squared, 
+                R=1500, formula=Y ~ child.weight.more.3.5kg*Mother.age.over.25*Family.history*Nutrition.history(introduction.to.cow.milk))
+
+outputn 
+
+# Random Forest, SVM, KNN, and Poisson regression with cross-validation (without interaction)
+n <- length(mydata$Y)
+rfx <- numeric(n)
+svx <- numeric(n)
+knx <- numeric(n)
+prx <- numeric(n)
+
+# Loop for model training and prediction
+for (i in 1:n) {
+  # Fit the models excluding the ith observation
+  rfm <- randomForest(Y ~ child.weight.more.3.5+ Mother.age.more.25+Family.history+ Nutrition.history(introduction.to.cow.milk), 
+                      data = mydata[-i, ])
+  svm_model <- svm(Y ~ child.weight.more.3.5+ Mother.age.more.25+Family.history+ Nutrition.history(introduction.to.cow.milk), 
+                   data = mydata[-i, ])
+  knn_model <- knnreg(Y ~ child.weight.more.3.5+ Mother.age.more.25+Family.history+ Nutrition.history(introduction.to.cow.milk),
+                      data = mydata[-i, ])
+  prm_model <- glm(Y ~ child.weight.more.3.5+ Mother.age.more.25+Family.history+ Nutrition.history(introduction.to.cow.milk),
+                   data = mydata[-i, ], family = "poisson")
+  
+  # Make predictions for the ith observation
+  new <- mydata[i, ]
+  rfx[i] <- predict(rfm, newdata = new)
+  svx[i] <- predict(svm_model, newdata = new)
+  knx[i] <- predict(knn_model, newdata = new)
+  prx[i] <- predict(prm_model, newdata = new, type = "response")
+}
+
+# Evaluate the performance of the models
+mse_prx <- mean((mydata$Y - prx)^2)
+mse_rfx <- mean((mydata$Y - rfx)^2)
+mse_svx <- mean((mydata$Y - svx)^2)
+mse_knx <- mean((mydata$Y - knx)^2)
+
+# Print MSE for each model
+cat("MSE for Poisson regression:", mse_prx, "\n")
+cat("MSE for Random Forest:", mse_rfx, "\n")
+cat("MSE for SVM:", mse_svx, "\n")
+cat("MSE for KNN:", mse_knx, "\n")
+
+# Compute R-squared for each model
+cat("R-squared for Poisson regression:", cor(mydata$Y, prx)^2, "\n")
+cat("R-squared for Random Forest:", cor(mydata$Y, rfx)^2, "\n")
+cat("R-squared for SVM:", cor(mydata$Y, svx)^2, "\n")
+cat("R-squared for KNN:", cor(mydata$Y, knx)^2, "\n")
+
+# Calculate RMSE for each model
+rmse_prx <- RMSE(mydata$Y, prx)
+rmse_rfx <- RMSE(mydata$Y, rfx)
+rmse_svx <- RMSE(mydata$Y, svx)
+rmse_knx <- RMSE(mydata$Y, knx)
+
+# Print RMSE for each model
+cat("RMSE for Poisson regression:", rmse_prx, "\n")
+cat("RMSE for Random Forest:", rmse_rfx, "\n")
+cat("RMSE for SVM:", rmse_svx, "\n")
+cat("RMSE for KNN:", rmse_knx, "\n")
+
+# Calculate MAE for each model
+mae_prx <- MAE(mydata$Y, prx)
+mae_rfx <- MAE(mydata$Y, rfx)
+mae_svx <- MAE(mydata$Y, svx)
+mae_knx <- MAE(mydata$Y, knx)
+
+# Print MAE for each model
+cat("MAE for Poisson regression:", mae_prx, "\n")
+cat("MAE for Random Forest:", mae_rfx, "\n")
+cat("MAE for SVM:", mae_svx, "\n")
+cat("MAE for KNN:", mae_knx, "\n")
+
+
+##### Plot 
+# Create a data frame with actual vs predicted values for each model
+results <- data.frame(
+  Actual = mydata$Y,
+  Pred_RandomForest = rfx,
+  Pred_SVM = svx,
+  Pred_KNN = knx,
+  Pred_Poisson = prx
+)
+
+# Plot Actual vs Predicted values for each model
+# Random Forest
+ggplot(results, aes(x = Actual, y = Pred_RandomForest)) +
+  geom_point(color = 'blue') + 
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = 'red') +
+  labs(title = "Actual vs Predicted (Random Forest)", x = "Actual", y = "Predicted") +
+  theme_minimal()
+
+# SVM
+ggplot(results, aes(x = Actual, y = Pred_SVM)) +
+  geom_point(color = 'green') + 
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = 'red') +
+  labs(title = "Actual vs Predicted (SVM)", x = "Actual", y = "Predicted") +
+  theme_minimal()
+
+# KNN
+ggplot(results, aes(x = Actual, y = Pred_KNN)) +
+  geom_point(color = 'purple') + 
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = 'red') +
+  labs(title = "Actual vs Predicted (KNN)", x = "Actual", y = "Predicted") +
+  theme_minimal()
+
+# Poisson Regression
+ggplot(results, aes(x = Actual, y = Pred_Poisson)) +
+  geom_point(color = 'orange') + 
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = 'red') +
+  labs(title = "Actual vs Predicted (Poisson Regression)", x = "Actual", y = "Predicted") +
+  theme_minimal()
+
+
+############
+# For Random Forest, SVM, KNN, and Poisson regression with cross-validation (with interaction):
+
+n <- length(mydata$Y)
+rfx <- numeric(n)
+svx <- numeric(n)
+knx <- numeric(n)
+prx <- numeric(n)
+
+# Loop for model training and prediction
+for (i in 1:n) {
+  # Fit the models excluding the ith observation
+  rfm <- randomForest(Y ~ child.weight.more.3.5kg*Mother.age.over.25*Family.history*Nutrition.history(introduction.to.cow.milk), 
+                      data = mydata[-i, ])
+  svm_model <- svm(Y ~ child.weight.more.3.5kg*Mother.age.over.25*Family.history*Nutrition.history(introduction.to.cow.milk),
+                   data = mydata[-i, ])
+  knn_model <- knnreg(Y ~ child.weight.more.3.5kg*Mother.age.over.25*Family.history*Nutrition.history(introduction.to.cow.milk),
+                      data = mydata[-i, ])
+  prm_model <- glm(Y ~ child.weight.more.3.5kg*Mother.age.over.25*Family.history*Nutrition.history(introduction.to.cow.milk),
+                   data = mydata[-i, ], family = "poisson")
+  
+  # Make predictions for the ith observation
+  new <- mydata[i, ]
+  rfx[i] <- predict(rfm, newdata = new)
+  svx[i] <- predict(svm_model, newdata = new)
+  knx[i] <- predict(knn_model, newdata = new)
+  prx[i] <- predict(prm_model, newdata = new, type = "response")
+}
+
+# Evaluate the performance of the models
+mse_prx <- mean((mydata$Y - prx)^2)
+mse_rfx <- mean((mydata$Y - rfx)^2)
+mse_svx <- mean((mydata$Y - svx)^2)
+mse_knx <- mean((mydata$Y - knx)^2)
+
+# Print MSE for each model
+cat("MSE for Poisson regression:", mse_prx, "\n")
+cat("MSE for Random Forest:", mse_rfx, "\n")
+cat("MSE for SVM:", mse_svx, "\n")
+cat("MSE for KNN:", mse_knx, "\n")
+
+# Compute R-squared for each model
+cat("R-squared for Poisson regression:", cor(mydata$Y, prx)^2, "\n")
+cat("R-squared for Random Forest:", cor(mydata$Y, rfx)^2, "\n")
+cat("R-squared for SVM:", cor(mydata$Y, svx)^2, "\n")
+cat("R-squared for KNN:", cor(mydata$Y, knx)^2, "\n")
+
+# Calculate RMSE for each model
+rmse_prx <- RMSE(mydata$Y, prx)
+rmse_rfx <- RMSE(mydata$Y, rfx)
+rmse_svx <- RMSE(mydata$Y, svx)
+rmse_knx <- RMSE(mydata$Y, knx)
+
+# Print RMSE for each model
+cat("RMSE for Poisson regression:", rmse_prx, "\n")
+cat("RMSE for Random Forest:", rmse_rfx, "\n")
+cat("RMSE for SVM:", rmse_svx, "\n")
+cat("RMSE for KNN:", rmse_knx, "\n")
+
+# Calculate MAE for each model
+mae_prx <- MAE(mydata$Y, prx)
+mae_rfx <- MAE(mydata$Y, rfx)
+mae_svx <- MAE(mydata$Y, svx)
+mae_knx <- MAE(mydata$Y, knx)
+
+# Print MAE for each model
+cat("MAE for Poisson regression:", mae_prx, "\n")
+cat("MAE for Random Forest:", mae_rfx, "\n")
+cat("MAE for SVM:", mae_svx, "\n")
+cat("MAE for KNN:", mae_knx, "\n")
+
+
